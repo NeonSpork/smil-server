@@ -1,0 +1,52 @@
+name: Build & Cache
+on:
+  workflow_call:
+    secrets:
+      NODE_ENV:
+        required: true
+      APP_NAME:
+        required: true
+      PORT:
+        required: true
+      JWT_SECRET:
+        required: true
+      DB_CONNECTION_STRING:
+        required: true
+      CODACY_PROJECT_TOKEN:
+        required: true
+env:
+  NODE_ENV: ${{ secrets.NODE_ENV }}
+  APP_NAME: ${{ secrets.APP_NAME }}
+  PORT: ${{ secrets.PORT }}
+  JWT_SECRET: ${{secrets.JWT_SECRET}}
+  DB_CONNECTION_STRING: ${{secrets.DB_CONNECTION_STRING}}
+  CODACY_PROJECT_TOKEN: ${{secrets.CODACY_PROJECT_TOKEN}}
+jobs:
+  build_and_cache:
+    name: 'Build and cache'
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [12.x, 14.x, 16.x]
+      fail-fast: false
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+        with:
+          node-version: '16'
+          cache: npm
+      - run: npm ci
+      - run: npm run build:prod
+      - uses: actions/upload-artifact@v2
+        if: always()
+        with:
+          name: build-output
+          path: |
+            package.json
+            package-lock.json
+            LICENSE
+            README.md
+            dist
+            configs
+            test
+          if-no-files-found: error
